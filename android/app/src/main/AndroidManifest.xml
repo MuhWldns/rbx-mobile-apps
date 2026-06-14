@@ -25,11 +25,17 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <intent-filter android:autoVerify="false">
+        </activity>
+        <!-- flutter_web_auth_2 callback activity — receives the rbxroyale://auth
+             deep link the backend redirects to after OAuth completes. -->
+        <activity
+            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:exported="true">
+            <intent-filter android:label="flutter_web_auth_2">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="rbxroyale" android:host="auth" />
+                <data android:scheme="rbxroyale" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
