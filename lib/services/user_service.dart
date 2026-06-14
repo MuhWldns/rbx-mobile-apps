@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/constants.dart';
 import '../models/user.dart';
@@ -13,14 +14,17 @@ class UserService {
   Future<User?> fetchMe() async {
     try {
       final res = await dio.get<Map<String, dynamic>>(AppConstants.authMe);
+      debugPrint('[UserService] /auth/me status=${res.statusCode} body=${res.data}');
       if (res.statusCode != 200) return null;
       final data = res.data;
       final raw = data?['user'];
       if (raw is Map<String, dynamic>) {
         return User.fromJson(raw);
       }
+      debugPrint('[UserService] /auth/me returned user=$raw (not a Map)');
       return null;
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[UserService] /auth/me threw: $e\n$st');
       return null;
     }
   }
