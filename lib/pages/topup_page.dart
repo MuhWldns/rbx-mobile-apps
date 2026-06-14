@@ -26,7 +26,7 @@ class TopUpPage extends StatefulWidget {
 }
 
 class _TopUpPageState extends State<TopUpPage> {
-  final TopUpService _topUpService = TopUpService();
+  late final TopUpService _topUpService = context.read<TopUpService>();
   final TextEditingController _amountController = TextEditingController(text: '10000');
 
   TopUpStep _step = TopUpStep.input;

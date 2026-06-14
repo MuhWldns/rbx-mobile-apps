@@ -21,7 +21,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  final LicenseService _licenseService = LicenseService();
+  late final LicenseService _licenseService = context.read<LicenseService>();
   List<License> _licenses = [];
   bool _licensesLoading = true;
 
