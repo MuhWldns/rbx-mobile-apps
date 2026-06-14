@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../core/theme.dart';
 import '../providers/auth_provider.dart';
-import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../widgets/panel_card.dart';
 import '../widgets/gradient_button.dart';
 
@@ -21,7 +21,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final AuthService _authService = AuthService();
+  late final UserService _userService = context.read<UserService>();
   final TextEditingController _robloxIdController = TextEditingController();
 
   bool _robloxSaving = false;
@@ -61,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      final result = await _authService.saveRobloxId(value);
+      final result = await _userService.saveRobloxId(value);
       setState(() => _robloxResult = result);
       if (mounted) {
         context.read<AuthProvider>().refreshUser();
