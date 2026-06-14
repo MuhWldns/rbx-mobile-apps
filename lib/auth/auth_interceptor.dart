@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import 'auth_service.dart';
 import 'auth_storage.dart';
@@ -27,11 +28,18 @@ class AuthInterceptor extends Interceptor {
   ) async {
     if (options.headers['X-Skip-Auth-Interceptor'] == '1') {
       options.headers.remove('X-Skip-Auth-Interceptor');
+      debugPrint('[AuthInterceptor] ${options.method} ${options.path} '
+          '(SKIP-AUTH)');
       return handler.next(options);
     }
     final access = await storage.readAccess();
     if (access != null && access.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $access';
+      debugPrint('[AuthInterceptor] ${options.method} ${options.path} '
+          'attached Bearer ${access.substring(0, access.length.clamp(0, 20))}...');
+    } else {
+      debugPrint('[AuthInterceptor] ${options.method} ${options.path} '
+          '(no token)');
     }
     return handler.next(options);
   }
