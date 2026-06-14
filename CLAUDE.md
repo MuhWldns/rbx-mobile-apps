@@ -20,29 +20,41 @@ flutter build apk                            # release Android build
 
 ## Architecture
 
-### Auth + session model (the unusual part)
+### Auth: Bearer JWT via system browser
 
-The backend uses an httpOnly `connect.sid` session cookie. OAuth login is *not* done via deep links — it happens entirely inside an in-app WebView:
+Login uses `flutter_web_auth_2` to open the OAuth provider in a Custom Tab / `ASWebAuthenticationSession`, **not** a WebView. The flow:
 
-1. `LoginPage` pushes `AuthWebView` (`lib/widgets/auth_webview.dart`) pointed at `/auth/google` or `/auth/discord`.
-2. After the provider redirects back, the backend lands on a URL containing `login=success`. The WebView intercepts this in `shouldOverrideUrlLoading` / `onLoadStop`.
-3. `flutter_inappwebview`'s `CookieManager.getCookies()` is used to read the httpOnly `connect.sid` cookie out of the WebView's cookie jar (this is the only reason `flutter_inappwebview` is used instead of plain webview — `webview_flutter` cannot read httpOnly cookies). It checks both the API URL and the bare `https://muhwldns.me` domain.
-4. The cookie string (`connect.sid=...`) is handed back to `AuthProvider.onSessionObtained`, which persists it through `ApiClient` and fetches `/auth/me`.
+1. `LoginPage` calls `authProvider.loginWithGoogle()` / `loginWithDiscord()`, which delegates to `AuthService` (`lib/auth/auth_service.dart`).
+2. `AuthService` opens `https://api-rbx.muhwldns.me/auth/<provider>?platform=mobile` in the system browser via `flutter_web_auth_2`.
+3. After the provider OAuth completes, the backend redirects to the deep link `rbxroyale://auth?access=<JWT>&refresh=<opaque>` (or `?error=oauth_failed` on failure). The Android intent filter for this scheme is in `android/app/src/main/AndroidManifest.xml`.
+4. `AuthService` parses the deep link, persists `access` and `refresh` to `AuthStorage` (Keychain/EncryptedSharedPreferences), and `AuthProvider` fetches `/auth/me` via `UserService`.
 
-If you change the OAuth flow, also use a non-WebView UA — `auth_webview.dart` overrides the user agent to a Chrome-on-Pixel string because Google blocks default WebView UAs with `disallowed_useragent`.
+Why system browser: Google blocks WebView OAuth with `disallowed_useragent`, and a real browser is more secure (user's existing Google session is reused, kredensial never lewat app).
 
-### HTTP client
+### HTTP client: Dio + AuthInterceptor
 
-`lib/core/http_client.dart` is a singleton `ApiClient` that:
-- Loads the saved cookie from `flutter_secure_storage` on `init()`.
-- Attaches `Cookie: connect.sid=...` to every request.
-- Inspects every response's `Set-Cookie` and re-persists `connect.sid` if the server rotates it.
+`lib/auth/dio_client.dart` exposes `buildAuthStack()` which constructs:
+- A `Dio` instance with `baseUrl: AppConstants.apiBaseUrl`, `validateStatus: (s) => s != null && s < 500` (services decode error bodies themselves).
+- An `AuthInterceptor` (`lib/auth/auth_interceptor.dart`) that attaches `Authorization: Bearer <access>` to every outgoing request.
+- An `AuthService` wired against the same Dio.
 
-All services (`AuthService`, `LicenseService`, `TopUpService`) call `ApiClient()` (same instance) and decode JSON inline. There is no `Dio`/interceptor layer — keep new endpoints in this style.
+When a request returns `401 { "error": "token_expired" }`, the interceptor calls `AuthService.refreshAccessToken()` (which posts to `/auth/refresh` with the rotated refresh token), then retries the original request once with the new access token. Other 401 codes (`invalid_token`, `refresh_invalid`) bubble up — `refresh_invalid` from the refresh endpoint itself wipes storage so the router pushes the user back to login.
+
+Bypass header: callers that must NOT be intercepted (the refresh and logout-mobile calls inside `AuthService`) set `X-Skip-Auth-Interceptor: '1'`. The interceptor strips that header and skips both the bearer attach and the 401 retry path.
+
+### Services
+
+All services take a `Dio` via constructor and live under `lib/services/`:
+- `UserService.fetchMe()` (returns `User?`) and `saveRobloxId(...)` — `/auth/me` and `/user/roblox-id`
+- `TopUpService.createTopUp(...)` and `getStatus(reference)` — `/topup/create` and `/topup/status/<ref>`
+- `LicenseService.fetchLicenses()` — `/licenses`
+
+There is no service-locator. `main.dart` builds `AuthStack`, constructs each service against `stack.dio`, and provides them through `MultiProvider`. Pages read services via `context.read<TopUpService>()` etc. Add new services in this same shape.
 
 ### State + routing
 
-- `AuthProvider` (`ChangeNotifier`) is the single source of truth for `user` and `isLoading`. It is created in `main.dart` *before* `runApp`, `init()` is awaited, then provided via `ChangeNotifierProvider.value`.
+- `AuthProvider` (`ChangeNotifier`) is the single source of truth for `user` and `isLoading`. Constructed with `authService` + `userService` deps, created in `main.dart` *before* `runApp`, `init()` awaited, then provided via `ChangeNotifierProvider.value`.
+- `AuthProvider.init()` checks `authService.isLoggedIn()` (token present in storage), and if so calls `userService.fetchMe()`. The interceptor handles refresh transparently; only when the token chain is fully dead does `fetchMe()` return null, which triggers `authService.logout()` to wipe storage so the router lands on `/login`.
 - `createRouter(authProvider)` (`lib/router/app_router.dart`) builds a `GoRouter` that uses `authProvider` as `refreshListenable`. The `redirect` callback gates everything: while `isLoading` it returns `null` (no redirect), otherwise it forces `/login` ↔ `/dashboard` based on `isAuthenticated`.
 - Authenticated routes (`/dashboard`, `/topup`, `/profile`) live inside a `ShellRoute` whose builder is `AppShell` (bottom nav). `/login` is outside the shell.
 - Pages read state via `context.watch<AuthProvider>()` and trigger refreshes by calling `authProvider.refreshUser()` (e.g. after a top-up succeeds in `topup_page.dart`).
@@ -57,8 +69,21 @@ All services (`AuthService`, `LicenseService`, `TopUpService`) call `ApiClient()
 
 ## Constants
 
-All API endpoints and the cookie key live in `lib/core/constants.dart` (`AppConstants`). Add new endpoints there rather than inlining URLs in services. The session cookie name (`connect.sid`) and storage key (`session_cookie`) are defined here too — keep them in sync with backend changes.
+All API endpoints, OAuth callback scheme, and storage keys live in `lib/core/constants.dart` (`AppConstants`). Add new endpoints there rather than inlining URLs in services. Key tokens:
+- `oauthCallbackScheme = 'rbxroyale'` — must match the AndroidManifest intent filter and the backend's `MOBILE_DEEP_LINK_REDIRECT` env.
+- `oauthMobileQueryParam = '?platform=mobile'` — appended to `/auth/google` and `/auth/discord` to trigger the deep-link callback path on the backend.
+- `storageAccessTokenKey` / `storageRefreshTokenKey` — keys used by `AuthStorage` against `flutter_secure_storage`.
 
 ## Tests
 
-Tests mirror `lib/` under `test/` (e.g. `test/services/topup_service_test.dart` for `lib/services/topup_service.dart`). They cover constants, model JSON parsing, and provider state — there are no integration tests against a live backend.
+Tests mirror `lib/` under `test/` (e.g. `test/auth/auth_service_test.dart` for `lib/auth/auth_service.dart`, `test/services/topup_service_test.dart` for `lib/services/topup_service.dart`). They cover:
+- `AuthStorage` save/read/clear via a mocked `flutter_secure_storage` MethodChannel
+- `AuthService` login/refresh/logout via a stub `FlutterWebAuth2Authenticator` and a Dio `_CannedAdapter`
+- `AuthInterceptor` bearer attach + 401 token_expired refresh+retry via a `_ScriptedAdapter`
+- Service JSON parsing and HTTP behavior via canned Dio adapters
+- Page widget tests with `FakeAuthProvider` + injected service Providers
+- No integration tests against a live backend.
+
+## Implementation plan archive
+
+The migration from cookie+WebView to bearer JWT was executed against the plan in `docs/superpowers/plans/2026-06-14-mobile-bearer-auth.md` (master) and the four chunk files under `docs/superpowers/plans/2026-06-14-mobile-bearer-auth/`. Refer to those for the rationale behind specific code shapes if a future change touches the auth stack.
