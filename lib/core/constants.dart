@@ -6,15 +6,23 @@ class AppConstants {
   static const String authDiscord = '$apiBaseUrl/auth/discord';
   static const String authMe = '$apiBaseUrl/auth/me';
   static const String authLogout = '$apiBaseUrl/auth/logout';
+  static const String authRefresh = '$apiBaseUrl/auth/refresh';
+  static const String authLogoutMobile = '$apiBaseUrl/auth/logout-mobile';
   static const String userRobloxId = '$apiBaseUrl/user/roblox-id';
   static const String topupCreate = '$apiBaseUrl/topup/create';
   static String topupStatus(String reference) =>
       '$apiBaseUrl/topup/status/$reference';
   static const String licenses = '$apiBaseUrl/licenses';
 
-  // Cookie key
+  // Cookie key (legacy — removed in chunk 4 once cookie flow is gone)
   static const String sessionCookieKey = 'connect.sid';
 
   // Storage keys
-  static const String storageCookieKey = 'session_cookie';
+  static const String storageCookieKey = 'session_cookie'; // legacy
+  static const String storageAccessTokenKey = 'auth_access_token';
+  static const String storageRefreshTokenKey = 'auth_refresh_token';
+
+  // OAuth deep-link
+  static const String oauthCallbackScheme = 'rbxroyale';
+  static const String oauthMobileQueryParam = '?platform=mobile';
 }
