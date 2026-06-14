@@ -1,6 +1,6 @@
-import 'dart:convert';
+import 'package:dio/dio.dart';
+
 import '../core/constants.dart';
-import '../core/http_client.dart';
 
 class TopUpResult {
   final String orderId;
@@ -55,39 +55,40 @@ class TopUpStatus {
 }
 
 class TopUpService {
-  final ApiClient _client = ApiClient();
+  TopUpService({required this.dio});
 
-  /// Create a QRIS top-up payment.
+  final Dio dio;
+
   Future<TopUpResult> createTopUp({
     required int amount,
     String? customerName,
     String? customerEmail,
+    String? customerPhone,
   }) async {
-    final body = <String, dynamic>{
-      'amount': amount,
-    };
+    final body = <String, dynamic>{'amount': amount};
     if (customerName != null) body['customer_name'] = customerName;
     if (customerEmail != null) body['customer_email'] = customerEmail;
+    if (customerPhone != null) body['customer_phone'] = customerPhone;
 
-    final response = await _client.post(AppConstants.topupCreate, body: body);
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode != 201) {
+    final res = await dio.post<Map<String, dynamic>>(
+      AppConstants.topupCreate,
+      data: body,
+    );
+    final data = res.data ?? const <String, dynamic>{};
+    if (res.statusCode != 201) {
       throw Exception(data['error'] ?? 'Gagal membuat pembayaran');
     }
-
     return TopUpResult.fromJson(data);
   }
 
-  /// Poll payment status.
   Future<TopUpStatus> getStatus(String reference) async {
-    final response = await _client.get(AppConstants.topupStatus(reference));
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode != 200) {
+    final res = await dio.get<Map<String, dynamic>>(
+      AppConstants.topupStatus(reference),
+    );
+    final data = res.data ?? const <String, dynamic>{};
+    if (res.statusCode != 200) {
       throw Exception(data['error'] ?? 'Gagal mengecek status');
     }
-
     return TopUpStatus.fromJson(data);
   }
 }
