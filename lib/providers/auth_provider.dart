@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+
+import '../auth/auth_service.dart';
 import '../models/user.dart';
-import '../services/auth_service.dart';
-import '../core/http_client.dart';
+import '../services/user_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
-  final ApiClient _apiClient = ApiClient();
+  AuthProvider({required this.authService, required this.userService});
+
+  final AuthService authService;
+  final UserService userService;
 
   User? _user;
   bool _isLoading = true;
@@ -14,38 +17,49 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
 
-  /// Initialize: load saved session and try to fetch user.
+  /// Boot: if a token exists, try to fetch /auth/me. The interceptor will
+  /// silently refresh on token_expired; we only land in the unauthenticated
+  /// branch when the token chain is genuinely dead.
   Future<void> init() async {
     _isLoading = true;
     notifyListeners();
 
-    await _apiClient.init();
-
-    if (_apiClient.hasSession) {
-      _user = await _authService.fetchMe();
+    if (await authService.isLoggedIn()) {
+      _user = await userService.fetchMe();
+      // If fetchMe came back null, the token chain is dead — wipe it so the
+      // router sends the user to /login.
+      if (_user == null) {
+        await authService.logout();
+      }
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
-  /// Called after OAuth WebView extracts the session cookie.
-  Future<bool> onSessionObtained(String cookie) async {
-    await _apiClient.setSessionCookie(cookie);
-    _user = await _authService.fetchMe();
+  Future<bool> loginWithGoogle() async {
+    final ok = await authService.loginWithGoogle();
+    if (!ok) return false;
+    _user = await userService.fetchMe();
     notifyListeners();
     return _user != null;
   }
 
-  /// Refresh user data from the server.
+  Future<bool> loginWithDiscord() async {
+    final ok = await authService.loginWithDiscord();
+    if (!ok) return false;
+    _user = await userService.fetchMe();
+    notifyListeners();
+    return _user != null;
+  }
+
   Future<void> refreshUser() async {
-    _user = await _authService.fetchMe();
+    _user = await userService.fetchMe();
     notifyListeners();
   }
 
-  /// Logout.
   Future<void> logout() async {
-    await _authService.logout();
+    await authService.logout();
     _user = null;
     notifyListeners();
   }
