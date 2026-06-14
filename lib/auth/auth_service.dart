@@ -28,19 +28,33 @@ class AuthService {
 
   Future<bool> _oauthLogin(String baseEndpoint) async {
     final url = '$baseEndpoint${AppConstants.oauthMobileQueryParam}';
+    // ignore: avoid_print
+    print('[AuthService] opening OAuth URL: $url');
     try {
       final result = await _webAuth.authenticate(
         url: url,
         callbackUrlScheme: AppConstants.oauthCallbackScheme,
       );
+      // ignore: avoid_print
+      print('[AuthService] callback result: $result');
       final uri = Uri.parse(result);
-      if (uri.queryParameters['error'] != null) return false;
+      if (uri.queryParameters['error'] != null) {
+        // ignore: avoid_print
+        print('[AuthService] callback error: ${uri.queryParameters['error']}');
+        return false;
+      }
       final access = uri.queryParameters['access'];
       final refresh = uri.queryParameters['refresh'];
-      if (access == null || refresh == null) return false;
+      if (access == null || refresh == null) {
+        // ignore: avoid_print
+        print('[AuthService] missing tokens in callback (access=$access, refresh=$refresh)');
+        return false;
+      }
       await storage.save(access: access, refresh: refresh);
       return true;
-    } catch (_) {
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('[AuthService] login failed: $e\n$st');
       return false;
     }
   }
