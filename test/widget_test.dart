@@ -12,6 +12,8 @@ void main() {
       expect(AppConstants.authDiscord, 'https://api-rbx.muhwldns.me/auth/discord');
       expect(AppConstants.authMe, 'https://api-rbx.muhwldns.me/auth/me');
       expect(AppConstants.authLogout, 'https://api-rbx.muhwldns.me/auth/logout');
+      expect(AppConstants.authRefresh, 'https://api-rbx.muhwldns.me/auth/refresh');
+      expect(AppConstants.authLogoutMobile, 'https://api-rbx.muhwldns.me/auth/logout-mobile');
     });
 
     test('topupStatus generates correct URL', () {
@@ -21,8 +23,14 @@ void main() {
       );
     });
 
-    test('session cookie key is connect.sid', () {
-      expect(AppConstants.sessionCookieKey, 'connect.sid');
+    test('OAuth deep-link scheme is rbxroyale', () {
+      expect(AppConstants.oauthCallbackScheme, 'rbxroyale');
+      expect(AppConstants.oauthMobileQueryParam, '?platform=mobile');
+    });
+
+    test('storage keys are stable', () {
+      expect(AppConstants.storageAccessTokenKey, 'auth_access_token');
+      expect(AppConstants.storageRefreshTokenKey, 'auth_refresh_token');
     });
   });
 }

@@ -1,8 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:rbx_mobile_apps/auth/auth_service.dart';
 import 'package:rbx_mobile_apps/models/user.dart';
 import 'package:rbx_mobile_apps/providers/auth_provider.dart';
+import 'package:rbx_mobile_apps/services/topup_service.dart';
+import 'package:rbx_mobile_apps/services/user_service.dart';
 import 'package:rbx_mobile_apps/pages/topup_page.dart';
 
 /// A testable AuthProvider with injectable user data.
@@ -24,10 +28,19 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
   bool get isAuthenticated => _user != null;
 
   @override
+  AuthService get authService => throw UnimplementedError();
+
+  @override
+  UserService get userService => throw UnimplementedError();
+
+  @override
   Future<void> init() async {}
 
   @override
-  Future<bool> onSessionObtained(String cookie) async => true;
+  Future<bool> loginWithGoogle() async => true;
+
+  @override
+  Future<bool> loginWithDiscord() async => true;
 
   @override
   Future<void> refreshUser() async {}
@@ -59,19 +72,25 @@ User _createTestUser() {
   });
 }
 
+Widget _wrap(Widget child, {required FakeAuthProvider provider}) {
+  final dio = Dio();
+  return MaterialApp(
+    home: MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthProvider>.value(value: provider),
+        Provider<TopUpService>.value(value: TopUpService(dio: dio)),
+      ],
+      child: Scaffold(body: child),
+    ),
+  );
+}
+
 void main() {
   group('TopUpPage', () {
     testWidgets('shows header and balance', (tester) async {
       final provider = FakeAuthProvider(user: _createTestUser());
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: TopUpPage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const TopUpPage(), provider: provider));
 
       expect(find.text('TOP UP'), findsOneWidget);
       expect(find.text('Isi saldo dengan QRIS'), findsOneWidget);
@@ -81,20 +100,12 @@ void main() {
     testWidgets('shows input form with quick amounts', (tester) async {
       final provider = FakeAuthProvider(user: _createTestUser());
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: TopUpPage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const TopUpPage(), provider: provider));
 
       expect(find.text('Nominal top up'), findsOneWidget);
       expect(find.text('Pilih nominal'), findsOneWidget);
       expect(find.text('Lanjut ke QRIS'), findsOneWidget);
 
-      // Quick amounts
       expect(find.textContaining('10.000'), findsWidgets);
       expect(find.textContaining('25.000'), findsWidgets);
       expect(find.textContaining('50.000'), findsWidgets);
@@ -106,21 +117,12 @@ void main() {
     testWidgets('shows error when amount is below minimum', (tester) async {
       final provider = FakeAuthProvider(user: _createTestUser());
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: TopUpPage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const TopUpPage(), provider: provider));
 
-      // Clear existing text and enter invalid amount
       final textField = find.byType(TextField);
       await tester.enterText(textField, '500');
       await tester.pump();
 
-      // Tap submit
       await tester.tap(find.text('Lanjut ke QRIS'));
       await tester.pump();
 
@@ -130,14 +132,7 @@ void main() {
     testWidgets('shows error when amount exceeds maximum', (tester) async {
       final provider = FakeAuthProvider(user: _createTestUser());
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: TopUpPage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const TopUpPage(), provider: provider));
 
       final textField = find.byType(TextField);
       await tester.enterText(textField, '600000');
@@ -152,14 +147,7 @@ void main() {
     testWidgets('shows loading when user is null', (tester) async {
       final provider = FakeAuthProvider(user: null);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: TopUpPage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const TopUpPage(), provider: provider));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });

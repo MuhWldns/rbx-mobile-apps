@@ -1,11 +1,13 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:rbx_mobile_apps/auth/auth_service.dart';
 import 'package:rbx_mobile_apps/models/user.dart';
 import 'package:rbx_mobile_apps/providers/auth_provider.dart';
+import 'package:rbx_mobile_apps/services/user_service.dart';
 import 'package:rbx_mobile_apps/pages/profile_page.dart';
 
-/// A testable AuthProvider with injectable user data.
 class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
   User? _user;
   bool _isLoading;
@@ -24,10 +26,19 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
   bool get isAuthenticated => _user != null;
 
   @override
+  AuthService get authService => throw UnimplementedError();
+
+  @override
+  UserService get userService => throw UnimplementedError();
+
+  @override
   Future<void> init() async {}
 
   @override
-  Future<bool> onSessionObtained(String cookie) async => true;
+  Future<bool> loginWithGoogle() async => true;
+
+  @override
+  Future<bool> loginWithDiscord() async => true;
 
   @override
   Future<void> refreshUser() async {}
@@ -64,19 +75,25 @@ User _createTestUser({String? robloxUserId}) {
   });
 }
 
+Widget _wrap(Widget child, {required FakeAuthProvider provider}) {
+  final dio = Dio();
+  return MaterialApp(
+    home: MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthProvider>.value(value: provider),
+        Provider<UserService>.value(value: UserService(dio: dio)),
+      ],
+      child: Scaffold(body: child),
+    ),
+  );
+}
+
 void main() {
   group('ProfilePage', () {
     testWidgets('shows account information', (tester) async {
       final provider = FakeAuthProvider(user: _createTestUser());
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: ProfilePage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const ProfilePage(), provider: provider));
 
       expect(find.text('PROFILE'), findsOneWidget);
       expect(find.text('Account Settings'), findsOneWidget);
@@ -91,14 +108,7 @@ void main() {
     testWidgets('shows Roblox section', (tester) async {
       final provider = FakeAuthProvider(user: _createTestUser());
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: ProfilePage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const ProfilePage(), provider: provider));
 
       await tester.scrollUntilVisible(
         find.text('Roblox Account'),
@@ -115,14 +125,7 @@ void main() {
         user: _createTestUser(robloxUserId: '987654321'),
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: ProfilePage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const ProfilePage(), provider: provider));
 
       expect(find.textContaining('Roblox ID tersambung: 987654321'), findsOneWidget);
     });
@@ -130,14 +133,7 @@ void main() {
     testWidgets('shows wallet summary', (tester) async {
       final provider = FakeAuthProvider(user: _createTestUser());
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: ProfilePage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const ProfilePage(), provider: provider));
 
       await tester.scrollUntilVisible(
         find.text('Wallet'),
@@ -154,14 +150,7 @@ void main() {
     testWidgets('shows logout button', (tester) async {
       final provider = FakeAuthProvider(user: _createTestUser());
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: ProfilePage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const ProfilePage(), provider: provider));
 
       await tester.scrollUntilVisible(
         find.text('Logout'),
@@ -175,14 +164,7 @@ void main() {
     testWidgets('shows loading when user is null', (tester) async {
       final provider = FakeAuthProvider(user: null);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<AuthProvider>.value(
-            value: provider,
-            child: const Scaffold(body: ProfilePage()),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const ProfilePage(), provider: provider));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
