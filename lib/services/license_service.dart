@@ -1,6 +1,6 @@
-import 'dart:convert';
+import 'package:dio/dio.dart';
+
 import '../core/constants.dart';
-import '../core/http_client.dart';
 
 class License {
   final String id;
@@ -34,25 +34,28 @@ class License {
       licenseType: json['licenseType'] ?? 'PERSONAL',
       status: json['status'] ?? 'ACTIVE',
       maxGames: json['maxGames'] ?? 3,
-      whitelistedGames: (json['gameWhitelists'] as List?)?.length ?? 0,
+      whitelistedGames: (json['gameWhitelists'] as List?)?.length ??
+          (json['games'] as List?)?.length ??
+          0,
       createdAt: json['createdAt'],
     );
   }
 }
 
 class LicenseService {
-  final ApiClient _client = ApiClient();
+  LicenseService({required this.dio});
 
-  /// Fetch user's licenses.
+  final Dio dio;
+
   Future<List<License>> fetchLicenses() async {
-    final response = await _client.get(AppConstants.licenses);
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode != 200) {
+    final res = await dio.get<Map<String, dynamic>>(AppConstants.licenses);
+    final data = res.data ?? const <String, dynamic>{};
+    if (res.statusCode != 200) {
       throw Exception(data['error'] ?? 'Gagal memuat licenses');
     }
-
     final list = data['licenses'] as List? ?? [];
-    return list.map((l) => License.fromJson(l)).toList();
+    return list
+        .map((l) => License.fromJson(l as Map<String, dynamic>))
+        .toList();
   }
 }
