@@ -14,11 +14,7 @@ class AppConstants {
       '$apiBaseUrl/topup/status/$reference';
   static const String licenses = '$apiBaseUrl/licenses';
 
-  // Cookie key (legacy — removed in chunk 4 once cookie flow is gone)
-  static const String sessionCookieKey = 'connect.sid';
-
   // Storage keys
-  static const String storageCookieKey = 'session_cookie'; // legacy
   static const String storageAccessTokenKey = 'auth_access_token';
   static const String storageRefreshTokenKey = 'auth_refresh_token';
 
