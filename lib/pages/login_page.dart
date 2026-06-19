@@ -33,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
     });
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login gagal, coba lagi.')),
+        const SnackBar(content: Text('Login failed, please try again.')),
       );
     }
     // On success the router redirect picks it up and navigates to /dashboard.

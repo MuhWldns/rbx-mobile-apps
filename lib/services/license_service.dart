@@ -51,7 +51,7 @@ class LicenseService {
     final res = await dio.get<Map<String, dynamic>>(AppConstants.licenses);
     final data = res.data ?? const <String, dynamic>{};
     if (res.statusCode != 200) {
-      throw Exception(data['error'] ?? 'Gagal memuat licenses');
+      throw Exception(data['error'] ?? 'Failed to load licenses');
     }
     final list = data['licenses'] as List? ?? [];
     return list

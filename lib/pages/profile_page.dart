@@ -65,7 +65,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() => _robloxResult = result);
       if (mounted) {
         context.read<AuthProvider>().refreshUser();
-        _showSnackBar('Roblox User ID berhasil disimpan!', isError: false);
+        _showSnackBar('Roblox User ID saved successfully!', isError: false);
       }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
@@ -114,7 +114,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Kelola akun dan sambungkan Roblox ID kamu.',
+              'Manage your account and link your Roblox ID.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
@@ -179,7 +179,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Sambungkan akun Roblox kamu untuk verifikasi kepemilikan game saat whitelist license.',
+                    'Link your Roblox account to verify game ownership when whitelisting licenses.',
                     style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
@@ -207,7 +207,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Roblox ID tersambung: ${user.robloxUserId}',
+                            'Roblox ID linked: ${user.robloxUserId}',
                             style: TextStyle(
                               color: AppTheme.emerald,
                               fontSize: 13,
@@ -234,7 +234,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           keyboardType: TextInputType.number,
                           style: const TextStyle(color: Colors.white, fontSize: 14),
                           decoration: InputDecoration(
-                            hintText: 'Contoh: 123456789',
+                            hintText: 'Example: 123456789',
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 12,
@@ -309,7 +309,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Cara menemukan Roblox User ID:',
+                          'How to find your Roblox User ID:',
                           style: TextStyle(
                             color: AppTheme.textSecondary,
                             fontSize: 12,
@@ -317,10 +317,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        _InstructionStep(number: '1', text: 'Buka browser, login ke roblox.com'),
-                        _InstructionStep(number: '2', text: 'Klik profil kamu (avatar di kanan atas)'),
-                        _InstructionStep(number: '3', text: 'Lihat URL: roblox.com/users/123456789/profile'),
-                        _InstructionStep(number: '4', text: 'Angka tersebut adalah User ID kamu'),
+                        _InstructionStep(number: '1', text: 'Open a browser and log in to roblox.com'),
+                        _InstructionStep(number: '2', text: 'Click your profile (avatar in the top right)'),
+                        _InstructionStep(number: '3', text: 'Check the URL: roblox.com/users/123456789/profile'),
+                        _InstructionStep(number: '4', text: 'That number is your User ID'),
                       ],
                     ),
                   ),
@@ -345,7 +345,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(child: _WalletStat(label: 'Saldo', value: _rupiahFormat.format(user.walletBalance), color: Colors.white)),
+                      Expanded(child: _WalletStat(label: 'Balance', value: _rupiahFormat.format(user.walletBalance), color: Colors.white)),
                       Expanded(child: _WalletStat(label: 'Total Top Up', value: _rupiahFormat.format(user.totalTopUp), color: AppTheme.emerald)),
                       Expanded(child: _WalletStat(label: 'Total Spent', value: _rupiahFormat.format(user.totalSpent), color: AppTheme.rose)),
                     ],

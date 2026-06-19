@@ -76,7 +76,7 @@ class TopUpService {
     );
     final data = res.data ?? const <String, dynamic>{};
     if (res.statusCode != 201) {
-      throw Exception(data['error'] ?? 'Gagal membuat pembayaran');
+      throw Exception(data['error'] ?? 'Failed to create payment');
     }
     return TopUpResult.fromJson(data);
   }
@@ -87,7 +87,7 @@ class TopUpService {
     );
     final data = res.data ?? const <String, dynamic>{};
     if (res.statusCode != 200) {
-      throw Exception(data['error'] ?? 'Gagal mengecek status');
+      throw Exception(data['error'] ?? 'Failed to check status');
     }
     return TopUpStatus.fromJson(data);
   }

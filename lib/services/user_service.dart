@@ -37,7 +37,7 @@ class UserService {
     );
     final data = res.data ?? const <String, dynamic>{};
     if (res.statusCode != 200) {
-      throw Exception(data['error'] ?? 'Gagal menyimpan Roblox ID');
+      throw Exception(data['error'] ?? 'Failed to save Roblox ID');
     }
     return {
       'username': (data['robloxUsername'] as String?) ?? '',

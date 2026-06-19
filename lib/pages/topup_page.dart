@@ -77,7 +77,7 @@ class _TopUpPageState extends State<TopUpPage> {
           _pollingTimer?.cancel();
           setState(() {
             _step = TopUpStep.failed;
-            _error = 'Pembayaran gagal atau dibatalkan.';
+            _error = 'Payment failed or was canceled.';
           });
           return;
         }
@@ -118,11 +118,11 @@ class _TopUpPageState extends State<TopUpPage> {
 
     final amount = int.tryParse(_amountController.text);
     if (amount == null || amount < 1000) {
-      setState(() => _error = 'Minimal top up Rp 1.000.');
+      setState(() => _error = 'Minimum top up is Rp 1,000.');
       return;
     }
     if (amount > 500000) {
-      setState(() => _error = 'Maksimal QRIS Rp 500.000.');
+      setState(() => _error = 'Maximum QRIS amount is Rp 500,000.');
       return;
     }
 
@@ -187,12 +187,12 @@ class _TopUpPageState extends State<TopUpPage> {
             Text('TOP UP', style: Theme.of(context).textTheme.labelSmall),
             const SizedBox(height: 8),
             Text(
-              'Isi saldo dengan QRIS',
+              'Top up via QRIS',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              'Scan QR code untuk mengisi saldo.',
+              'Scan the QR code to top up your balance.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
@@ -209,7 +209,7 @@ class _TopUpPageState extends State<TopUpPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Saldo saat ini: ',
+                    'Current balance: ',
                     style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
                   ),
                   Text(
@@ -258,7 +258,7 @@ class _TopUpPageState extends State<TopUpPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Nominal top up',
+                'Top-up amount',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 14,
@@ -307,14 +307,14 @@ class _TopUpPageState extends State<TopUpPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Minimum Rp 1.000, maksimum Rp 500.000.',
+                'Minimum Rp 1,000, maximum Rp 500,000.',
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
               ),
               const SizedBox(height: 16),
 
               // Quick amounts
               const Text(
-                'Pilih nominal',
+                'Quick amounts',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 14,
@@ -362,7 +362,7 @@ class _TopUpPageState extends State<TopUpPage> {
 
               const SizedBox(height: 20),
               GradientButton(
-                text: 'Lanjut ke QRIS',
+                text: 'Continue to QRIS',
                 onPressed: _handleSubmit,
               ),
             ],
@@ -387,12 +387,12 @@ class _TopUpPageState extends State<TopUpPage> {
           ),
           const SizedBox(height: 24),
           const Text(
-            'Membuat pembayaran...',
+            'Creating payment...',
             style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
-            'Mohon tunggu sebentar.',
+            'Please wait a moment.',
             style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
           ),
         ],
@@ -413,7 +413,7 @@ class _TopUpPageState extends State<TopUpPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Gunakan e-wallet atau mobile banking untuk scan',
+                'Use an e-wallet or mobile banking app to scan',
                 style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: 20),
@@ -450,7 +450,7 @@ class _TopUpPageState extends State<TopUpPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Detail Pembayaran',
+                'Payment Details',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
@@ -463,7 +463,7 @@ class _TopUpPageState extends State<TopUpPage> {
                 ),
                 child: Column(
                   children: [
-                    _DetailRow(label: 'Nominal', value: _rupiahFormat.format(_orderAmount)),
+                    _DetailRow(label: 'Amount', value: _rupiahFormat.format(_orderAmount)),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -481,7 +481,7 @@ class _TopUpPageState extends State<TopUpPage> {
                             ),
                             const SizedBox(width: 6),
                             const Text(
-                              'Menunggu pembayaran',
+                              'Awaiting payment',
                               style: TextStyle(color: AppTheme.amber, fontSize: 13, fontWeight: FontWeight.w500),
                             ),
                           ],
@@ -490,7 +490,7 @@ class _TopUpPageState extends State<TopUpPage> {
                     ),
                     if (_countdown.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      _DetailRow(label: 'Berlaku', value: _countdown),
+                      _DetailRow(label: 'Expires in', value: _countdown),
                     ],
                   ],
                 ),
@@ -517,7 +517,7 @@ class _TopUpPageState extends State<TopUpPage> {
                     ),
                     const SizedBox(width: 12),
                     const Text(
-                      'Mengecek status pembayaran...',
+                      'Checking payment status...',
                       style: TextStyle(color: AppTheme.violet, fontSize: 13),
                     ),
                   ],
@@ -537,7 +537,7 @@ class _TopUpPageState extends State<TopUpPage> {
                     ),
                   ),
                   child: const Text(
-                    'Batalkan & Kembali',
+                    'Cancel & Go Back',
                     style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -566,12 +566,12 @@ class _TopUpPageState extends State<TopUpPage> {
           ),
           const SizedBox(height: 20),
           const Text(
-            'Top Up Berhasil!',
+            'Top Up Successful!',
             style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            'Saldo Anda telah bertambah ${_rupiahFormat.format(_orderAmount)}',
+            'Your balance has been topped up by ${_rupiahFormat.format(_orderAmount)}',
             style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 20),
@@ -584,7 +584,7 @@ class _TopUpPageState extends State<TopUpPage> {
             ),
             child: Column(
               children: [
-                Text('Saldo baru:', style: TextStyle(color: AppTheme.textTertiary, fontSize: 13)),
+                Text('New balance:', style: TextStyle(color: AppTheme.textTertiary, fontSize: 13)),
                 const SizedBox(height: 4),
                 Text(
                   _rupiahFormat.format(user?.walletBalance ?? 0),
@@ -594,7 +594,7 @@ class _TopUpPageState extends State<TopUpPage> {
             ),
           ),
           const SizedBox(height: 24),
-          GradientButton(text: 'Top Up Lagi', onPressed: _handleReset),
+          GradientButton(text: 'Top Up Again', onPressed: _handleReset),
         ],
       ),
     );
@@ -616,17 +616,17 @@ class _TopUpPageState extends State<TopUpPage> {
           ),
           const SizedBox(height: 20),
           const Text(
-            'Pembayaran Gagal',
+            'Payment Failed',
             style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            _error ?? 'Pembayaran tidak berhasil diproses.',
+            _error ?? 'Payment could not be processed.',
             style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          GradientButton(text: 'Coba Lagi', onPressed: _handleReset),
+          GradientButton(text: 'Try Again', onPressed: _handleReset),
         ],
       ),
     );
@@ -648,12 +648,12 @@ class _TopUpPageState extends State<TopUpPage> {
           ),
           const SizedBox(height: 20),
           const Text(
-            'Belum Terbayar',
+            'Not Yet Paid',
             style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            'Pembayaran belum terdeteksi dalam 5 menit. Jika sudah membayar, saldo akan otomatis masuk.',
+            'Payment was not detected within 5 minutes. If you have already paid, your balance will be credited automatically.',
             style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
             textAlign: TextAlign.center,
           ),
@@ -673,7 +673,7 @@ class _TopUpPageState extends State<TopUpPage> {
                     ),
                   ),
                   child: const Text(
-                    'Cek Lagi',
+                    'Check Again',
                     style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
                   ),
                 ),
